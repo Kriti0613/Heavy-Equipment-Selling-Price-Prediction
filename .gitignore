@@ -1,0 +1,4 @@
+notebook/catboost_info
+data/metadata.csv
+data/sample_submission.csv
+.venv
