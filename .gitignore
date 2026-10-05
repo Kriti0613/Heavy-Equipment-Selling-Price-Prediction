@@ -1,4 +1,5 @@
 notebook/catboost_info
+notebook/model.pkl
 data/metadata.csv
 data/sample_submission.csv
 .venv
