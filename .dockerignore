@@ -8,7 +8,6 @@ __pycache__/
 notebook/
 data/
 model.pkl
-model_bundle.pkl
 .env
 .env.*
 !.env.example
