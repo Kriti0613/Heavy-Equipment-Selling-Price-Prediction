@@ -64,24 +64,17 @@ uvicorn main:app --reload
 
 For Render, create a **Web Service** for this repository. Use `pip install -r requirements.txt` as the build command and `uvicorn main:app --host 0.0.0.0 --port $PORT` as the start command. The included `Procfile` contains the same start command. Add the exported `model_bundle.pkl` as a secret file at the project root, or set the `MODEL_PATH` environment variable to its mounted path. Export the bundle from the notebook before deploying; `model.pkl` is not compatible.
 
-Open `http://127.0.0.1:8000/docs` locally (or your deployed service's `/docs`) for the interactive API documentation. Submit a `POST` request to `/predict` with a `features` object. Provide as many of the original dataset's feature values as possible; unspecified trained features are imputed using the training data. `TransactionDate` is used to derive transaction date features and asset age.
+Open `http://127.0.0.1:8000/docs` locally (or your deployed service's `/docs`) for the interactive API documentation. Send these three numeric values to `POST /predict`:
 
 ```json
 {
-  "features": {
-    "TransactionDate": "2010-06-15",
-    "ManufactureYear": 2005,
-    "OperationalHoursMeter": 2500,
-    "Spec_VariantModifier": null,
-    "Spec_FullDescriptor": "310G",
-    "UtilizationTier": "Medium",
-    "RegionCode": "Arizona",
-    "InventoryGroupCategory": "BL"
-  }
+  "AssetAge": 2,
+  "OperationalHoursMeter": 250,
+  "ManufactureYear": 2016
 }
 ```
 
-The response contains the predicted selling price in dollars:
+The other model features use saved training defaults. The response contains the predicted selling price in dollars:
 
 ```json
 {
@@ -89,4 +82,4 @@ The response contains the predicted selling price in dollars:
 }
 ```
 
-`GET /health` reports whether the model artifact is available. If it is not, `/predict` returns HTTP 503 until the notebook has exported the model bundle.
+If the model bundle is unavailable, `/predict` returns HTTP 503.
