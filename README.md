@@ -50,3 +50,43 @@ The dataset contains records representing finalized accounting or operational ev
 * Seaborn
 * Scikit-learn
 * Jupyter Notebook
+
+## FastAPI prediction service
+
+The API serves the LightGBM regressor trained in the notebook. Run the notebook through its final model export cell first; it writes `model_bundle.pkl` to the project root with the model and its fitted preprocessing objects.
+
+Install the project dependencies and start the service locally from the project root:
+
+```bash
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+For Render, create a **Web Service** for this repository. Use `pip install -r requirements.txt` as the build command and `uvicorn main:app --host 0.0.0.0 --port $PORT` as the start command. The included `Procfile` contains the same start command. Add the exported `model_bundle.pkl` as a secret file at the project root, or set the `MODEL_PATH` environment variable to its mounted path. Export the bundle from the notebook before deploying; `model.pkl` is not compatible.
+
+Open `http://127.0.0.1:8000/docs` locally (or your deployed service's `/docs`) for the interactive API documentation. Submit a `POST` request to `/predict` with a `features` object. Provide as many of the original dataset's feature values as possible; unspecified trained features are imputed using the training data. `TransactionDate` is used to derive transaction date features and asset age.
+
+```json
+{
+  "features": {
+    "TransactionDate": "2010-06-15",
+    "ManufactureYear": 2005,
+    "OperationalHoursMeter": 2500,
+    "Spec_VariantModifier": null,
+    "Spec_FullDescriptor": "310G",
+    "UtilizationTier": "Medium",
+    "RegionCode": "Arizona",
+    "InventoryGroupCategory": "BL"
+  }
+}
+```
+
+The response contains the predicted selling price in dollars:
+
+```json
+{
+  "selling_price": 28500.0
+}
+```
+
+`GET /health` reports whether the model artifact is available. If it is not, `/predict` returns HTTP 503 until the notebook has exported the model bundle.
