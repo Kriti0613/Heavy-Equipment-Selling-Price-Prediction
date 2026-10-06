@@ -12,7 +12,14 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).resolve().parent / "model_bundle.pkl"))
+LOCAL_MODEL_PATH = Path(__file__).resolve().parent / "model_bundle.pkl"
+RENDER_MODEL_PATH = Path("/etc/secrets/model_bundle.pkl")
+MODEL_PATH = Path(
+    os.getenv(
+        "MODEL_PATH",
+        LOCAL_MODEL_PATH if LOCAL_MODEL_PATH.is_file() else RENDER_MODEL_PATH,
+    )
+)
 
 
 class PredictionRequest(BaseModel):

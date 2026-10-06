@@ -62,7 +62,16 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-The Docker image includes `model_bundle.pkl` at `/app/model_bundle.pkl`, which is the API's default model path. Build with the bundle in the Docker build context. For Render, configure the service to use the repository's Dockerfile and let its `CMD` start the server. The bundle is about 196 MB and is ignored by Git; it must be made available to Render's Docker build (for example, through Git LFS or another supported artifact workflow). A Docker build fails if the bundle is absent. Export the bundle from the notebook before deploying; `model.pkl` is not compatible.
+The model bundle is about 196 MB and is ignored by Git, so it is not copied into the Docker image or included in Render's Docker build context. For Render, configure the service to use the repository's Dockerfile, then add `model_bundle.pkl` under **Environment → Secret Files** using the exact filename `model_bundle.pkl`. Render mounts it at `/etc/secrets/model_bundle.pkl`, which the API uses automatically. Alternatively, set `MODEL_PATH` to the bundle's mounted path. Export the bundle from the notebook before deploying; `model.pkl` is not compatible.
+
+To run the Docker image locally, build it without the ignored model file, then mount the exported bundle at the Render-compatible path:
+
+```bash
+docker build -t heavy-equipment-price-predictor .
+docker run --rm -p 8000:8000 \
+  -v "$PWD/model_bundle.pkl:/etc/secrets/model_bundle.pkl:ro" \
+  heavy-equipment-price-predictor
+```
 
 Open `http://127.0.0.1:8000/predict` locally (or your deployed service's `/predict`) to enter prediction values in the browser form. The **Predict** button submits them to `POST /predict` and displays the selling price. For interactive API documentation or direct JSON requests, use `http://127.0.0.1:8000/docs` (or your deployed service's `/docs`):
 
