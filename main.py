@@ -9,6 +9,7 @@ from typing import Any
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).resolve().parent / "model_bundle.pkl"))
@@ -61,7 +62,79 @@ def make_features(payload: PredictionRequest, bundle: dict[str, Any]) -> pd.Data
 
 @app.get("/")
 def root() -> dict[str, str]:
-    return {"message": "Heavy equipment price prediction API. Use /docs to try it."}
+    return {"message": "Heavy equipment price prediction API. Use /predict for the form or /docs for the API."}
+
+
+@app.get("/predict", response_class=HTMLResponse)
+def predict_form() -> str:
+    return """
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Heavy Equipment Price Prediction</title>
+        <style>
+          body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 36rem; padding: 0 1rem; }
+          label { display: block; font-weight: 600; margin-top: 1rem; }
+          input, button { box-sizing: border-box; font: inherit; margin-top: 0.35rem; padding: 0.6rem; width: 100%; }
+          button { cursor: pointer; margin-top: 1.25rem; }
+          #result { margin-top: 1.25rem; }
+        </style>
+      </head>
+      <body>
+        <main>
+          <h1>Heavy Equipment Price Prediction</h1>
+          <form id="prediction-form">
+            <label for="asset-age">Asset age</label>
+            <input id="asset-age" name="AssetAge" type="number" step="any" required>
+
+            <label for="operational-hours">Operational hours meter</label>
+            <input id="operational-hours" name="OperationalHoursMeter" type="number" step="any" required>
+
+            <label for="manufacture-year">Manufacture year</label>
+            <input id="manufacture-year" name="ManufactureYear" type="number" step="any" required>
+
+            <button type="submit">Predict</button>
+          </form>
+          <p id="result" aria-live="polite"></p>
+        </main>
+        <script>
+          const form = document.getElementById("prediction-form");
+          const result = document.getElementById("result");
+
+          form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            result.textContent = "Calculating prediction...";
+
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(
+              Array.from(formData, ([name, value]) => [name, Number(value)])
+            );
+
+            try {
+              const response = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+              });
+              const data = await response.json();
+              if (!response.ok) {
+                throw new Error(data.detail || "Prediction failed.");
+              }
+              result.textContent = "Predicted selling price: " +
+                new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD"
+                }).format(data.selling_price);
+            } catch (error) {
+              result.textContent = "Unable to predict: " + error.message;
+            }
+          });
+        </script>
+      </body>
+    </html>
+    """
 
 
 @app.post("/predict", response_model=PredictionResponse)

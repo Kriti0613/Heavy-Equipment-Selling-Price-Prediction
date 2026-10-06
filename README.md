@@ -64,7 +64,7 @@ uvicorn main:app --reload
 
 For Render, create a **Web Service** for this repository. Use `pip install -r requirements.txt` as the build command and `uvicorn main:app --host 0.0.0.0 --port $PORT` as the start command. The included `Procfile` contains the same start command. Add the exported `model_bundle.pkl` as a secret file at the project root, or set the `MODEL_PATH` environment variable to its mounted path. Export the bundle from the notebook before deploying; `model.pkl` is not compatible.
 
-Open `http://127.0.0.1:8000/docs` locally (or your deployed service's `/docs`) for the interactive API documentation. Send these three numeric values to `POST /predict`:
+Open `http://127.0.0.1:8000/predict` locally (or your deployed service's `/predict`) to enter prediction values in the browser form. The **Predict** button submits them to `POST /predict` and displays the selling price. For interactive API documentation or direct JSON requests, use `http://127.0.0.1:8000/docs` (or your deployed service's `/docs`):
 
 ```json
 {
